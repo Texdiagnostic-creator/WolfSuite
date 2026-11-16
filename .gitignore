@@ -21,3 +21,6 @@ mod/**/*.dll
 .idea/
 Thumbs.db
 desktop.ini
+
+# Адрес своего сервера подставляется при сборке (см. assets\default-server.example.txt)
+assets/default-server.txt

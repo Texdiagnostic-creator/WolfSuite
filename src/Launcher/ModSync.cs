@@ -11,7 +11,29 @@ namespace Wolf.Launcher
     public sealed class LauncherSettings
     {
         // Pre-filled so a new player only has to press "Проверить моды" and "Играть".
-        public const string DefaultServerUrl = "http://188.134.68.141:8775";
+        // The address is not kept in the source tree: the build embeds assets\default-server.txt
+        // as a resource (see build.bat). Without that file the field stays empty and the player
+        // types the address himself - which is what happens when the project is built from
+        // a fresh clone of the repository.
+        public static readonly string DefaultServerUrl = ReadBundledServerUrl();
+
+        private static string ReadBundledServerUrl()
+        {
+            try
+            {
+                using (Stream s = typeof(LauncherSettings).Assembly
+                    .GetManifestResourceStream("WolfLauncher.DefaultServer.txt"))
+                {
+                    if (s == null) { return ""; }
+                    using (StreamReader r = new StreamReader(s, Encoding.UTF8))
+                    {
+                        string line = r.ReadLine();
+                        return line == null ? "" : line.Trim();
+                    }
+                }
+            }
+            catch { return ""; }
+        }
 
         public string ServerUrl = DefaultServerUrl;
         public string GameRoot = "";

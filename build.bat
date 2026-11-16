@@ -35,8 +35,8 @@ rem The icon must carry frames for every shell size: a single 64x64 frame makes
 rem Explorer show a generic blank page instead of the wolf (large icons ask for 256).
 set "ICON=%ROOT%assets\wolf_multi.ico"
 
-rem Every path is quoted: the project may live in a folder with spaces
-rem ("C:\Server 1\..."), and csc splits unquoted arguments at spaces.
+rem Every path is quoted: the project may live in a folder with spaces,
+rem and csc splits unquoted arguments at spaces.
 set "COMMON="%SRC%\Common\Json.cs" "%SRC%\Common\GamePaths.cs" "%SRC%\Common\ChunkStore.cs" "%SRC%\Common\ModManifest.cs" "%SRC%\Common\ModFilters.cs" "%SRC%\Common\HashCache.cs" "%SRC%\Common\LauncherUpdate.cs" "%SRC%\Common\Net.cs" "%SRC%\Common\P2P.cs" "%SRC%\Common\Theme.cs" "%SRC%\Common\Proc.cs" "%SRC%\Common\ServerKit.cs" "%SRC%\Common\ServerConfig.cs" "%SRC%\Common\Backup.cs" "%SRC%\Common\Scheduler.cs" "%SRC%\Common\WolfInfo.cs" "%SRC%\Common\ManifestDiff.cs" "%SRC%\Common\PackHistory.cs" "%SRC%\Common\PlayerStats.cs" "%SRC%\Common\Notify.cs" "%SRC%\Common\TrayIcon.cs" "%SRC%\Common\NeonButton.cs" "%SRC%\Common\ImageButton.cs" "%SRC%\Common\ShellNotify.cs""
 
 echo.
@@ -53,10 +53,20 @@ if errorlevel 1 (
 )
 
 echo [*] dist\WolfLauncher\WolfLauncher.exe - client launcher
+rem The default server address is not part of the source tree: whoever builds the
+rem launcher for a particular server drops it into assets\default-server.txt and it
+rem is embedded as a resource. No such file -> empty address field in the launcher.
+set "DEFAULTSRV="
+if exist "%ROOT%assets\default-server.txt" (
+    set "DEFAULTSRV=/resource:"%ROOT%assets\default-server.txt",WolfLauncher.DefaultServer.txt"
+) else (
+    echo     note: assets\default-server.txt not found - server address stays empty
+)
 "%CSC%" /nologo /target:winexe /platform:x64 /optimize+ %REFS% ^
     /win32icon:"%ICON%" ^
     /resource:"%ROOT%assets\banner.jpg",WolfLauncher.Banner.jpg ^
     /resource:"%ROOT%assets\blood.png",WolfLauncher.Blood.png ^
+    %DEFAULTSRV% ^
     /out:"%CLIENTOUT%\WolfLauncher.exe" ^
     %COMMON% ^
     "%SRC%\Launcher\*.cs"

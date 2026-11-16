@@ -60,6 +60,11 @@ internal static class SelfTest
     {
         Console.WriteLine("== serverconfig.xml ==");
         string real = TestPaths.ConfigFile;
+        if (string.IsNullOrEmpty(real))
+        {
+            Console.WriteLine("  skip: переменная WOLF_TEST_CONFIG не задана");
+            return;
+        }
         ServerConfig cfg = new ServerConfig();
         bool loaded = cfg.Load(real);
         Check(loaded, "реальный конфиг загружен: " + real);

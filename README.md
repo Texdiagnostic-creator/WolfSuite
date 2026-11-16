@@ -48,6 +48,46 @@ WolfSuite\build.bat
 
 Аргумент `nopause` — без остановки в конце (для скриптов).
 
+Нужен только .NET Framework 4.8 (есть в Windows 10/11) — SDK, NuGet и Visual Studio
+не требуются, компилятор `csc.exe` берётся из `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319`.
+
+Готовые сборки в репозиторий не кладутся: после клонирования `bin\` и `dist\` пустые,
+всё собирается одной командой. `WolfServer.exe` собирается тем же запуском, что и
+`WolfLauncher.exe`, — они используют общий слой `src\Common`.
+
+### Адрес сервера по умолчанию
+
+В исходниках адреса нет. Лаунчер подставляет его из ресурса, который подкладывается
+при сборке:
+
+```
+copy assets\default-server.example.txt assets\default-server.txt
+rem впишите в файл одну строку: http://мой-сервер:8775
+build.bat
+```
+
+`assets\default-server.txt` в git не попадает (см. `.gitignore`), поэтому сборка
+из чистого клона даёт лаунчер с пустым полем адреса — игрок вводит его сам.
+Для публичной сборки под конкретный сервер файл создаётся перед `build.bat`.
+
+### Тесты
+
+Тестам нужны реальные файлы сервера, поэтому вместо жёстких путей используются
+переменные окружения. Что не задано — тот тест печатает `skip` и не падает:
+
+| Переменная | Что указывает |
+|---|---|
+| `WOLF_TEST_MODS` | папка с раздаваемыми модами |
+| `WOLF_TEST_CONFIG` | `serverconfig.xml` рабочего сервера |
+| `WOLF_TEST_MODSYNC` | `config.json` установки ModSync (`exclude_patterns`) |
+| `WOLF_TEST_ZAC` | `AntiCheatConfig.xml`; по умолчанию `<MODS>\Zipp0o's-AntiCheat\AntiCheatConfig.xml` |
+
+```
+set WOLF_TEST_MODS=D:\srv\Mods
+set WOLF_TEST_CONFIG=D:\srv\serverconfig.xml
+bin\SelfTest.exe
+```
+
 Баннер в шапке лаунчера — `assets\banner.jpg` (1000×199), фон кнопки «Играть» — `assets\blood.png`
 (540×92, капли крови). Оба встраиваются в exe как ресурсы (`/resource` в `build.bat`),
 внешних файлов игроку не нужно. Чтобы поставить другие картинки: заменить файлы в `assets\`
@@ -139,6 +179,8 @@ bin\SelfTest.exe     JSON, разбор реального serverconfig.xml, ч�
 bin\NetTest.exe      сквозной цикл: манифест → трекер → P2P → HTTP → сборка файлов
 bin\BackupTest.exe   определение миров, бэкап, восстановление, ротация, занятый файл
 ```
+
+Пути к реальным файлам задаются переменными окружения (см. «Тесты» выше).
 
 ## Порты
 

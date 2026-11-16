@@ -16,7 +16,7 @@ namespace Wolf.Launcher
             string url = (txtUrl.Text ?? "").Trim();
             if (url.Length == 0)
             {
-                MessageBox.Show(this, "Введите адрес сервера, например http://188.134.68.141:8775",
+                MessageBox.Show(this, "Введите адрес сервера, например http://мой-сервер:8775",
                     "WolfLauncher", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
