@@ -1,0 +1,23 @@
+# Сборка и результаты
+bin/
+dist/
+*.exe
+*.pdb
+_obj/
+obj/
+Build/
+
+# Логи сборки и тестов
+_build.log
+_selftest.txt
+
+# Скомпилированные моды (собираются из .cs через mod\AutoConnect\build_mod.bat)
+mod/**/*.dll
+
+# Локальные настройки и рабочие файлы
+*.user
+*.suo
+.vs/
+.idea/
+Thumbs.db
+desktop.ini
