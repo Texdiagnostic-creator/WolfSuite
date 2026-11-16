@@ -1,0 +1,97 @@
+name: build
+
+# WolfSuite is a plain .NET Framework 4.8 project compiled with the csc.exe that ships
+# with Windows, so the build needs no SDK, no NuGet restore and no generator step.
+# windows-latest already contains the compiler used by build.bat.
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build (${{ matrix.configuration }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: package     # exe that goes to players
+            tests: 'false'
+          - configuration: full        # everything, including the test executables
+            tests: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        shell: cmd
+        run: |
+          echo --- csc ---
+          if exist "%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe" (
+            "%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /? | findstr /i version
+          ) else (
+            echo csc.exe not found & exit /b 1
+          )
+
+      # assets\default-server.txt is not part of the repository: the address of a
+      # particular server is supplied by whoever builds the release. A CI build has
+      # no address, so the launcher ships with an empty address field on purpose.
+      - name: Build
+        shell: cmd
+        run: build.bat nopause
+
+      - name: Self test
+        if: matrix.tests == 'true'
+        shell: cmd
+        # The tests that need a real server skip themselves when WOLF_TEST_* is unset.
+        run: bin\SelfTest.exe
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out\launcher, out\server | Out-Null
+          Copy-Item dist\WolfLauncher\WolfLauncher.exe out\launcher\
+          Copy-Item dist\WolfServer\WolfServer.exe    out\server\
+          if (Test-Path dist\WolfLauncher\README.txt) { Copy-Item dist\WolfLauncher\README.txt out\launcher\ }
+          if (Test-Path dist\WolfServer\README.txt)   { Copy-Item dist\WolfServer\README.txt   out\server\ }
+          if (Test-Path bin) { Copy-Item bin\*.exe out\ -ErrorAction SilentlyContinue }
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem out -Recurse -File -Filter *.exe |
+            ForEach-Object { '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name } |
+            Set-Content out\SHA256SUMS.txt
+          Get-Content out\SHA256SUMS.txt
+
+      - name: Upload launcher
+        if: matrix.configuration == 'package'
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfLauncher
+          path: out/launcher/
+          if-no-files-found: error
+
+      - name: Upload server
+        if: matrix.configuration == 'package'
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfServer
+          path: out/server/
+          if-no-files-found: error
+
+      - name: Upload full build
+        if: matrix.tests == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: WolfSuite-full
+          path: out/
+          if-no-files-found: error
